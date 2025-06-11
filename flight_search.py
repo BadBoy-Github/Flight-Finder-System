@@ -80,7 +80,7 @@ class FlightSearch:
             print(f"No flights found from {origin_city_code} to {destination_city_code}")
             return None
     
-    def get_flight_price(self, origin, destination, date_from, date_to):
+    def get_flight_price(self, origin, destination, date_from, date_to, is_direct=True):
         url = "https://test.api.amadeus.com/v2/shopping/flight-offers"
         headers = {
             "Authorization": f"Bearer {self.access_token}"
@@ -93,7 +93,8 @@ class FlightSearch:
             "returnDate": (datetime.strptime(date_from, "%Y-%m-%d") + timedelta(days=7)).strftime("%Y-%m-%d"),
             "adults": 1,
             "currencyCode": "INR",
-            "max": 1
+            "max": 1,
+            "nonStop": str(is_direct).lower()
         }
 
         response = requests.get(url, headers=headers, params=params)
@@ -102,6 +103,9 @@ class FlightSearch:
 
         # Safeguard against missing or empty data
         if not data.get("data"):
+            if is_direct:
+            # Retry with indirect flights
+                return self.get_flight_price(origin, destination, date_from, date_to, is_direct=False)
             raise ValueError(f"No flight data found from {origin} to {destination}.")
 
         try:

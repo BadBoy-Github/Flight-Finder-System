@@ -14,7 +14,7 @@ deal_dict = {}
 today = datetime.now().strftime("%Y-%m-%d")
 tomorrow = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
 
-print(f"{'City':<15}{'Original':<12}{'Website':<12}{'Status'}")
+print(f"{'City':<15}{'Original':<12}{'Current':<12}{'Status'}")
 
 for row in sheet_data:
     city_name = row["city"]
@@ -38,8 +38,6 @@ for row in sheet_data:
             "website": website_price,
             "diff": abs(price_diff)
         }
-    elif price_diff <= 500:
-        status = "SAME DEAL"
     else:
         status = "NO DEAL"
 
@@ -48,16 +46,24 @@ for row in sheet_data:
 # Send the best deal only
 if deal_dict:
     # Get city with maximum savings
-    best_deal_city = min(deal_dict, key=lambda city: deal_dict[city]["website"])
+    print("\nDeal Dictionary:\n", deal_dict)
+    best_deal_city = max(deal_dict, key=lambda city: deal_dict[city]["diff"])
     deal = deal_dict[best_deal_city]
     message = (
         f"🔥 Aggressive Deal Found!\n"
         f"City: {best_deal_city}\n"
         f"Original Price: ₹{deal['original']}\n"
         f"Current Price: ₹{deal['website']}\n"
+        f"You Save: ₹{deal['diff']}\n"
         f"Book now from MAA to {deal['iataCode']}!"
     )
 else:
     message = "Sorry, No aggressive deals right now."
 
+customers = dm.get_customer_emails()
+print(customers)
+emails = [customer["emailId:"] for customer in customers]
+print("[INFO] Emails fetched:", emails)
+
 nm.send_whatsapp(message)
+nm.send_emails(emails, message)
